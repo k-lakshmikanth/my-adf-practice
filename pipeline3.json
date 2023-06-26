@@ -1,0 +1,48 @@
+{
+    "name": "pipeline3",
+    "properties": {
+        "activities": [
+            {
+                "name": "Notebook1",
+                "type": "DatabricksNotebook",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Shared/Notebook1",
+                    "baseParameters": {
+                        "Base_url": {
+                            "value": "@pipeline().parameters.Databricks_url",
+                            "type": "Expression"
+                        },
+                        "Access_token": {
+                            "value": "@pipeline().parameters.Access_token",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "AzureDatabricks1",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "parameters": {
+            "Databricks_url": {
+                "type": "string",
+                "defaultValue": "https://adb-6372685373003443.3.azuredatabricks.net"
+            },
+            "Access_token": {
+                "type": "string",
+                "defaultValue": "dapie64c92a7f6e789cf3956d0031a02705f"
+            }
+        },
+        "annotations": []
+    }
+}
