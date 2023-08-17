@@ -1,0 +1,113 @@
+{
+    "name": "pipeline_databricks_trigger",
+    "properties": {
+        "activities": [
+            {
+                "name": "Web1",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "url": "https://adb-5326270226476907.7.azuredatabricks.net/api/2.0/clusters/list",
+                    "method": "GET",
+                    "headers": {
+                        "Authorization": "Bearer dapi9b7058e5df5807b1b97038beb02a97e2-3"
+                    }
+                }
+            },
+            {
+                "name": "Script1",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "Web1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSqlDatabase",
+                    "type": "LinkedServiceReference"
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "parameters": [
+                                {
+                                    "name": "p_json",
+                                    "type": "String",
+                                    "value": {
+                                        "value": "@string(activity('Web1').output.clusters)",
+                                        "type": "Expression"
+                                    },
+                                    "direction": "Input"
+                                }
+                            ],
+                            "type": "Query",
+                            "text": {
+                                "value": "DECLARE @json Nvarchar(4000) = @p_json;\n\nselect json_value([value],'$.cluster_name') as cluster_name,\njson_value([value],'$.cluster_id') as cluster_id\n from openjson(@json)\n where json_value([value],'$.cluster_name') like 'LK Applications%'",
+                                "type": "Expression"
+                            }
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "Notebook1",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "Script1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/test",
+                    "baseParameters": {
+                        "name": "adf  test"
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureDatabricks",
+                    "type": "LinkedServiceReference",
+                    "parameters": {
+                        "p_cluster": {
+                            "value": "@activity('Script1').output.resultSets[0].rows[0].cluster_id",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            }
+        ],
+        "annotations": [],
+        "lastPublishTime": "2023-08-17T10:17:37Z"
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}
